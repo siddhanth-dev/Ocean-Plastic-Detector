@@ -5,6 +5,7 @@ import streamlit as st
 import folium
 from streamlit_folium import st_folium
 from data.hotspots import get_nearest, get_hotspots
+from components.alerts import render_alerts
 
 SEVERITY_COLOR = {
     "Critical": "#ff2222",
@@ -66,6 +67,9 @@ def render_map():
 
     st.markdown("---")
 
+    # ── Map + Alerts layout ───────────────────────────────────────────────────
+    map_col, alert_col = st.columns([3, 1])
+
     # ── Build Map ─────────────────────────────────────────────────────────────
     layer = MAP_LAYERS[layer_choice]
     m = folium.Map(
@@ -114,10 +118,15 @@ def render_map():
             ).add_to(m)
 
     elif results is not None and results.empty:
-        st.warning("No hotspots found. Try increasing range.")
+        with map_col:
+            st.warning("No hotspots found. Try increasing range.")
 
     # ── Render map + capture click ────────────────────────────────────────────
-    map_data = st_folium(m, width=1050, height=600)
+    with map_col:
+        map_data = st_folium(m, width=None, height=600)
+
+    with alert_col:
+        render_alerts()
 
     # If user clicked on map — update vessel coordinates
     if map_data and map_data.get("last_clicked"):
