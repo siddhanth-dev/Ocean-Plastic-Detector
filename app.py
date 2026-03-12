@@ -2,6 +2,7 @@ import streamlit as st
 from components.map_view import render_map
 from components.metrics import render_metrics
 from components.trend_chart import render_trend
+from components.mission_brief import render_mission_brief
 from fdi import calculate_fdi, classify_fdi, ml_classify
 
 SEVERITY_COLOR = {
@@ -21,18 +22,24 @@ if "results"        not in st.session_state: st.session_state.results        = N
 if "searched_lat"   not in st.session_state: st.session_state.searched_lat   = 20.0
 if "searched_lon"   not in st.session_state: st.session_state.searched_lon   = 0.0
 if "searched_range" not in st.session_state: st.session_state.searched_range = 3000
+if "click_lat"      not in st.session_state: st.session_state.click_lat      = 20.0
+if "click_lon"      not in st.session_state: st.session_state.click_lon      = 0.0
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
 render_metrics()
 st.markdown("---")
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3 = st.tabs(["Hotspot Map", "FDI Analyzer", "Pollution Trends"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Hotspot Map",
+    "FDI Analyzer",
+    "Pollution Trends",
+    "Mission Brief"
+])
 
 with tab1:
     render_map()
 
-# ═══════════════════════════════════════════════════════════════════════════════
 with tab2:
     st.markdown("#### Satellite Band Input")
     st.caption("Adjust spectral band values to classify a satellite region.")
@@ -65,3 +72,6 @@ with tab2:
 
 with tab3:
     render_trend()
+
+with tab4:
+    render_mission_brief()

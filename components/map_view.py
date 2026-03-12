@@ -71,9 +71,15 @@ def render_map():
     m = folium.Map(
         location=[st.session_state.searched_lat, st.session_state.searched_lon],
         zoom_start=2,
+        min_zoom=2,
+        zoom_control=True,
+        max_bounds=True,
         tiles=layer["tiles"],
         attr=layer["attr"]
     )
+    m.fit_bounds([[-75, -180], [75, 180]])
+    m.options["maxBounds"] = [[-85, -180], [85, 180]]
+    m.options["maxBoundsViscosity"] = 1.0
 
     # Vessel marker at clicked location
     folium.Marker(
@@ -111,7 +117,7 @@ def render_map():
         st.warning("No hotspots found. Try increasing range.")
 
     # ── Render map + capture click ────────────────────────────────────────────
-    map_data = st_folium(m, width=None, height=500)
+    map_data = st_folium(m, width=1050, height=600)
 
     # If user clicked on map — update vessel coordinates
     if map_data and map_data.get("last_clicked"):
@@ -208,3 +214,12 @@ def render_live_scan():
                 <div style="color:#888; margin-top:4px; font-size:0.85rem;">{result['action']}</div>
             </div>
             """, unsafe_allow_html=True)
+# def render_live_scan():
+#     st.markdown("---")
+#     st.markdown("#### Live Satellite Scan")
+#     st.info(
+#         "Sentinel-2 integration pipeline built and connected to "
+#         "Copernicus Data Space API. Live band values feed directly "
+#         "into the FDI classifier. Currently pending API processing "
+#         "quota — available in production deployment."
+#     )
