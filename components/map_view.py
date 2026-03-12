@@ -3,6 +3,15 @@
 
 import streamlit as st
 import folium
+import sys
+import os
+
+# Ensure searoute is importable
+site_packages = "/home/naveen/Ocean-Plastic-Detector/venv/lib/python3.12/site-packages"
+if os.path.exists(site_packages) and site_packages not in sys.path:
+    sys.path.append(site_packages)
+
+import searoute
 from streamlit_folium import st_folium
 from data.hotspots import get_nearest, get_hotspots
 from components.alerts import render_alerts
@@ -48,6 +57,23 @@ def render_map():
     # ── Session defaults ──────────────────────────────────────────────────────
     if "click_lat" not in st.session_state: st.session_state.click_lat = 20.0
     if "click_lon" not in st.session_state: st.session_state.click_lon = 0.0
+    if "route_origin" not in st.session_state: st.session_state.route_origin = (None, None)
+
+    def _calculate_maritime_route(target_name):
+        df = get_hotspots()
+        match = df[df["name"] == target_name]
+        if not match.empty:
+            row = match.iloc[0]
+            origin = [st.session_state.click_lon, st.session_state.click_lat]
+            dest   = [row["lon"], row["lat"]]
+            try:
+                route_data = searoute.searoute(origin, dest)
+                raw_coords = route_data["geometry"]["coordinates"]
+                st.session_state.selected_route = [[c[1], c[0]] for c in raw_coords]
+                st.session_state.route_origin = (st.session_state.click_lat, st.session_state.click_lon)
+                st.session_state.route_target_name = target_name
+            except Exception as e:
+                st.error(f"Routing failed: {e}")
 
     # ── Controls ──────────────────────────────────────────────────────────────
     col1, col2 = st.columns([2, 1])
@@ -117,6 +143,34 @@ def render_map():
                 )
             ).add_to(m)
 
+    # ── Auto-update route if vessel moved ────────────────────────────────────
+    if st.session_state.route_target_name:
+        current_pos = (st.session_state.click_lat, st.session_state.click_lon)
+        if current_pos != st.session_state.route_origin:
+            # Re-identify the nearest hotspot to the new position
+            all_hotspots = get_nearest(st.session_state.click_lat, st.session_state.click_lon, 20000)
+            if not all_hotspots.empty:
+                nearest_name = all_hotspots.iloc[0]["name"]
+                _calculate_maritime_route(nearest_name)
+
+    # ── Render Selected Route ────────────────────────────────────────────────
+    if st.session_state.selected_route:
+        folium.PolyLine(
+            locations=st.session_state.selected_route,
+            color="#00ffff",
+            weight=4,
+            opacity=0.8,
+            dash_array='10, 10',
+            tooltip=f"Maritime Route to {st.session_state.route_target_name}"
+        ).add_to(m)
+        
+        # Add a marker for the destination
+        folium.Marker(
+            location=st.session_state.selected_route[-1],
+            tooltip=f"Destination: {st.session_state.route_target_name}",
+            icon=folium.Icon(color="red", icon="flag", prefix="fa")
+        ).add_to(m)
+
     elif results is not None and results.empty:
         with map_col:
             st.warning("No hotspots found. Try increasing range.")
@@ -183,6 +237,11 @@ def render_map():
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+                
+                if st.button(f"Route to {row['name']}", key=f"route_{row['name']}"):
+                    with st.spinner(f"Calculating maritime route to {row['name']}..."):
+                        _calculate_maritime_route(row["name"])
+                        st.rerun()
 
     # ── Live Satellite Scan ───────────────────────────────────────────────────
     render_live_scan()

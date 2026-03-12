@@ -1,4 +1,12 @@
 import streamlit as st
+import sys
+import os
+
+# Fix for broken venv relocation
+site_packages = "/home/naveen/Ocean-Plastic-Detector/venv/lib/python3.12/site-packages"
+if os.path.exists(site_packages) and site_packages not in sys.path:
+    sys.path.append(site_packages)
+
 from components.map_view import render_map
 from components.metrics import render_metrics
 from components.trend_chart import render_trend
@@ -24,6 +32,8 @@ if "searched_lon"   not in st.session_state: st.session_state.searched_lon   = 0
 if "searched_range" not in st.session_state: st.session_state.searched_range = 3000
 if "click_lat"      not in st.session_state: st.session_state.click_lat      = 20.0
 if "click_lon"      not in st.session_state: st.session_state.click_lon      = 0.0
+if "selected_route"  not in st.session_state: st.session_state.selected_route  = None
+if "route_target_name" not in st.session_state: st.session_state.route_target_name = ""
 
 # ── Metrics ───────────────────────────────────────────────────────────────────
 render_metrics()
