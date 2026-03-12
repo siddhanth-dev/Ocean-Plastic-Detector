@@ -1,11 +1,10 @@
 # components/map_view.py
 # Owned by: Mikhil
-# Job: Map + hotspot results + cleanup priority ranking in one tab
 
 import streamlit as st
 import folium
 from streamlit_folium import st_folium
-from data.hotspots import get_nearest
+from data.hotspots import get_nearest, get_hotspots
 
 SEVERITY_COLOR = {
     "Critical": "#ff2222",
@@ -28,7 +27,7 @@ MAP_LAYERS = {
     },
     "NASA Blue Marble": {
         "tiles": "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/BlueMarble_NextGeneration/default/GoogleMapsCompatible_Level8/{z}/{y}/{x}.jpg",
-        "attr":  "NASA GIBS — Blue Marble"
+        "attr":  "NASA GIBS"
     },
     "Dark": {
         "tiles": "CartoDB dark_matter",
@@ -45,21 +44,24 @@ def estimated_tonnes(row):
 
 def render_map():
 
-    # ── Inputs ────────────────────────────────────────────────────────────────
-    col1, col2, col3 = st.columns(3)
+    # ── Session defaults ──────────────────────────────────────────────────────
+    if "click_lat" not in st.session_state: st.session_state.click_lat = 20.0
+    if "click_lon" not in st.session_state: st.session_state.click_lon = 0.0
+
+    # ── Controls ──────────────────────────────────────────────────────────────
+    col1, col2 = st.columns([2, 1])
     with col1:
-        lat          = st.number_input("Vessel Latitude",  value=20.0, step=0.1)
+        layer_choice = st.radio("Map Layer", options=list(MAP_LAYERS.keys()), horizontal=True)
     with col2:
-        lon          = st.number_input("Vessel Longitude", value=0.0,  step=0.1)
-    with col3:
         search_range = st.slider("Search Range (km)", 500, 10000, 3000, step=500)
 
-    layer_choice = st.radio("Map Layer", options=list(MAP_LAYERS.keys()), horizontal=True)
+    # Coordinate display — updates from map click
+    st.caption(f"Vessel Location: {st.session_state.click_lat:.4f}, {st.session_state.click_lon:.4f} — Click map to change")
 
     if st.button("Find Nearby Hotspots"):
-        st.session_state.results        = get_nearest(lat, lon, search_range)
-        st.session_state.searched_lat   = lat
-        st.session_state.searched_lon   = lon
+        st.session_state.results        = get_nearest(st.session_state.click_lat, st.session_state.click_lon, search_range)
+        st.session_state.searched_lat   = st.session_state.click_lat
+        st.session_state.searched_lon   = st.session_state.click_lon
         st.session_state.searched_range = search_range
 
     st.markdown("---")
@@ -73,14 +75,14 @@ def render_map():
         attr=layer["attr"]
     )
 
+    # Vessel marker at clicked location
     folium.Marker(
-        location=[st.session_state.searched_lat, st.session_state.searched_lon],
-        tooltip="Your Vessel",
+        location=[st.session_state.click_lat, st.session_state.click_lon],
+        tooltip="Your Vessel — click map to move",
         icon=folium.Icon(color="blue", icon="ship", prefix="fa")
     ).add_to(m)
 
     results = st.session_state.results
-
     if results is not None and not results.empty:
         folium.Circle(
             location=[st.session_state.searched_lat, st.session_state.searched_lon],
@@ -106,17 +108,23 @@ def render_map():
             ).add_to(m)
 
     elif results is not None and results.empty:
-        st.warning("No hotspots found. Try increasing the search range.")
+        st.warning("No hotspots found. Try increasing range.")
 
-    st_folium(m, width=None, height=500)
+    # ── Render map + capture click ────────────────────────────────────────────
+    map_data = st_folium(m, width=None, height=500)
 
-    # ── Results + Priority Ranking ────────────────────────────────────────────
+    # If user clicked on map — update vessel coordinates
+    if map_data and map_data.get("last_clicked"):
+        clicked = map_data["last_clicked"]
+        st.session_state.click_lat = round(clicked["lat"], 4)
+        st.session_state.click_lon = round(clicked["lng"], 4)
+        st.rerun()
+
+    # ── Results + Priority ────────────────────────────────────────────────────
     if results is not None and not results.empty:
-
         st.markdown("---")
         left, right = st.columns([1, 1])
 
-        # Left — full results table
         with left:
             st.markdown(f"#### {len(results)} Hotspot(s) Found")
             st.dataframe(
@@ -132,10 +140,8 @@ def render_map():
                 hide_index=True
             )
 
-        # Right — top 3 priority targets
         with right:
             st.markdown("#### Top Cleanup Targets")
-
             ranked = results.copy()
             ranked["priority_score"] = ranked.apply(
                 lambda r: priority_score(r, st.session_state.searched_range), axis=1
@@ -162,3 +168,43 @@ def render_map():
                     </div>
                 </div>
                 """, unsafe_allow_html=True)
+
+    # ── Live Satellite Scan ───────────────────────────────────────────────────
+    render_live_scan()
+
+def render_live_scan():
+    from sentinel import get_fdi_from_satellite
+
+    st.markdown("---")
+    st.markdown("#### Live Satellite Scan")
+    st.caption("Fetch real Sentinel-2 band values for a zone and run FDI analysis.")
+
+    df   = get_hotspots()
+    zone = st.selectbox("Select zone to scan", df["name"].tolist())
+    row  = df[df["name"] == zone].iloc[0]
+
+    if st.button("Run Live Satellite Scan"):
+        with st.spinner("Fetching Sentinel-2 data from Copernicus..."):
+            result, error = get_fdi_from_satellite(row["lat"], row["lon"])
+
+        if error:
+            st.error(f"Scan failed: {error}")
+        else:
+            color = SEVERITY_COLOR.get(result["severity"], "#aaaaaa")
+
+            c1, c2, c3, c4 = st.columns(4)
+            c1.metric("Red Band",  result["red"])
+            c2.metric("NIR Band",  result["nir"])
+            c3.metric("SWIR Band", result["swir"])
+            c4.metric("FDI Score", result["fdi_score"])
+
+            st.markdown(f"""
+            <div style="border-left:5px solid {color}; padding:14px 18px;
+                        background:#111; border-radius:6px; margin-top:12px;">
+                <div style="color:{color}; font-weight:bold;">{result['severity'].upper()}</div>
+                <div style="color:#ccc; margin-top:4px;">
+                    {result['ml_label']} — {result['confidence']}% confidence
+                </div>
+                <div style="color:#888; margin-top:4px; font-size:0.85rem;">{result['action']}</div>
+            </div>
+            """, unsafe_allow_html=True)

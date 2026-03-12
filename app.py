@@ -1,6 +1,7 @@
 import streamlit as st
 from components.map_view import render_map
 from components.metrics import render_metrics
+from components.trend_chart import render_trend
 from fdi import calculate_fdi, classify_fdi, ml_classify
 
 SEVERITY_COLOR = {
@@ -26,7 +27,7 @@ render_metrics()
 st.markdown("---")
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab1, tab2 = st.tabs(["Hotspot Map", "FDI Analyzer"])
+tab1, tab2, tab3 = st.tabs(["Hotspot Map", "FDI Analyzer", "Pollution Trends"])
 
 with tab1:
     render_map()
@@ -61,3 +62,6 @@ with tab2:
         """, unsafe_allow_html=True)
 
         st.caption(f"FDI = NIR - (RED + SWIR) = {nir} - ({red} + {swir}) = {fdi_score}")
+
+with tab3:
+    render_trend()
