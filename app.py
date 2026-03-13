@@ -12,6 +12,9 @@ from components.metrics import render_metrics
 from components.trend_chart import render_trend
 from components.mission_brief import render_mission_brief
 from fdi import calculate_fdi, classify_fdi, ml_classify
+from ultralytics import YOLO
+from PIL import Image
+import numpy as np
 
 SEVERITY_COLOR = {
     "Critical": "#FF5400",
@@ -107,16 +110,24 @@ if "click_lon"      not in st.session_state: st.session_state.click_lon      = 0
 if "selected_route"  not in st.session_state: st.session_state.selected_route  = None
 if "route_target_name" not in st.session_state: st.session_state.route_target_name = ""
 
+
+@st.cache_resource
+def load_detection_model():
+    # YOLO model trained in plastic-hotspot-project1
+    return YOLO("plastic-hotspot-project1/best.pt")
+
+
 # ── Metrics ───────────────────────────────────────────────────────────────────
 render_metrics()
 st.markdown("---")
 
 # ── Tabs ──────────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs([
+tab1, tab2, tab3, tab4, tab5 = st.tabs([
     "Hotspot Map",
     "FDI Analyzer",
     "Pollution Trends",
-    "Mission Brief"
+    "Mission Brief",
+    "Image Detector",
 ])
 
 with tab1:
@@ -157,3 +168,56 @@ with tab3:
 
 with tab4:
     render_mission_brief()
+
+with tab5:
+    st.markdown("#### Image-based Plastic Detection")
+    st.caption("Run the trained YOLO model from `plastic-hotspot-project1` on an image.")
+
+    uploaded = st.file_uploader(
+        "Upload an image (JPEG/PNG)",
+        type=["jpg", "jpeg", "png"],
+        accept_multiple_files=False,
+    )
+
+    conf_thresh = st.slider("Confidence threshold", 0.1, 0.9, 0.25, step=0.05)
+
+    if uploaded is not None:
+        image = Image.open(uploaded).convert("RGB")
+        st.image(image, caption="Input image", use_column_width=True)
+
+        if st.button("Run Image Detection"):
+            model = load_detection_model()
+            results = model.predict(
+                source=np.array(image),
+                conf=conf_thresh,
+            )
+
+            r = results[0]
+            plotted = r.plot()  # BGR numpy array
+            plotted_rgb = plotted[:, :, ::-1]
+
+            st.image(plotted_rgb, caption="Detections", use_column_width=True)
+
+            boxes = r.boxes
+            if boxes is None or len(boxes) == 0:
+                st.info("No plastic objects detected at the selected confidence threshold.")
+            else:
+                st.success(f"Detected {len(boxes)} object(s).")
+
+                rows = []
+                for box in boxes:
+                    x1, y1, x2, y2 = box.xyxy[0]
+                    confidence = float(box.conf[0])
+                    class_id = int(box.cls[0])
+                    class_name = r.names.get(class_id, str(class_id))
+
+                    rows.append({
+                        "Class": class_name,
+                        "Confidence": round(confidence, 3),
+                        "x1": round(x1.item(), 1),
+                        "y1": round(y1.item(), 1),
+                        "x2": round(x2.item(), 1),
+                        "y2": round(y2.item(), 1),
+                    })
+
+                st.dataframe(rows, use_container_width=True)
