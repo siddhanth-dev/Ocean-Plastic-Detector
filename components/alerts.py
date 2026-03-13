@@ -14,10 +14,10 @@ GROWTH_RATE = {
 }
 
 ALERT_COLOR = {
-    "Critical": "#ff2222",
-    "High":     "#ff8800",
-    "Medium":   "#ffcc00",
-    "Low":      "#44cc44",
+    "Critical": "#FF5400",
+    "High":     "#FF8500",
+    "Medium":   "#FFB700",
+    "Low":      "#FFD000",
 }
 
 def get_alerts():
@@ -61,26 +61,24 @@ def render_alerts():
     for a in alerts:
         color = ALERT_COLOR.get(a["severity"], "#aaaaaa")
         st.markdown(f"""
-        <div style="
-            border-left: 4px solid {color};
-            background: #080f1c;
-            border-radius: 4px;
-            padding: 12px 16px;
-            margin-bottom: 10px;
-        ">
-            <div style="display:flex; justify-content:space-between;">
-                <div style="color:{color}; font-size:0.7rem; letter-spacing:2px; font-family:'Space Mono',monospace;">
-                    {a['severity'].upper()}
+        <div class="glass-card" style="margin-bottom: 12px; border-left: 4px solid {color} !important;">
+            <div style="display:flex; justify-content:space-between; align-items: center;">
+                <div style="color:{color}; font-size:0.75rem; font-weight:700; letter-spacing:1px; text-transform: uppercase;">
+                    {a['severity']}
                 </div>
-                <div style="color:#ff4444; font-size:0.75rem; font-family:'Space Mono',monospace;">
-                    +{a['growth_pct']}% THIS YEAR
+                <div style="color:#FFB700; font-size:0.8rem; font-family:'Space Mono',monospace; font-weight:600;">
+                    +{a['growth_pct']}% / YR
                 </div>
             </div>
-            <div style="color:#c8d8e8; font-weight:bold; margin-top:6px; font-size:0.9rem;">
+            <div style="color:#fff; font-weight:700; margin-top:8px; font-size:1.1rem; font-family:'Montserrat', sans-serif;">
                 {a['name']}
             </div>
-            <div style="color:#445566; font-size:0.75rem; margin-top:4px; font-family:'Space Mono',monospace;">
-                FDI: {a['fdi_prev']} &rarr; {a['fdi_now']} &nbsp;|&nbsp; {a['lat']}°, {a['lon']}°
+            <div style="color:#88aacc; font-size:0.8rem; margin-top:6px; font-family:'Space Mono',monospace;">
+                {a['lat']}°, {a['lon']}°
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,183,0,0.1);">
+                <span style="color:#88aacc; font-size:0.75rem;">FDI SCORE</span>
+                <span style="color:#FFB700; font-weight:700; font-size:0.9rem;">{a['fdi_now']}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)

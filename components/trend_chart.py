@@ -73,7 +73,9 @@ def render_trend():
         template="plotly_dark"
     )
     fig.update_layout(
-        legend=dict(orientation="h", yanchor="bottom", y=-0.4),
+        paper_bgcolor="#000814",
+        plot_bgcolor="#001D3D",
+        legend=dict(orientation="h", yanchor="bottom", y=-0.4, bgcolor="rgba(0,0,0,0)"),
         margin=dict(t=40, b=80),
         hovermode="x unified"
     )

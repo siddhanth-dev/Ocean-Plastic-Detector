@@ -1,4 +1,4 @@
-#!/home/sid/Ocean-Plastic-Detector/venv/bin/python3
+#!/home/naveen/Ocean-Plastic-Detector/venv/bin/python
 # -*- coding: utf-8 -*-
 import re
 import sys

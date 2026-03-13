@@ -127,16 +127,16 @@ def _render_pml_sidebar():
                       delta_color="normal")
 
     # ── Severity card ─────────────────────────────────────────────────────────
-    st.sidebar.markdown(
-        f"<div style='border-left:4px solid {color};padding:10px 14px;"
-        f"background:#111;border-radius:6px;margin:6px 0;'>"
-        f"<div style='color:{color};font-weight:bold;font-size:1rem;'>"
-        f"{res['severity'].upper()}</div>"
-        f"<div style='color:#ccc;font-size:0.82rem;margin-top:4px;'>{res['action']}</div>"
-        f"<div style='color:#888;font-size:0.78rem;margin-top:2px;'>"
-        f"{res['ml_label']} — {res['confidence']}% conf.</div></div>",
-        unsafe_allow_html=True,
-    )
+    st.sidebar.markdown(f"""
+    <div class="glass-card" style="border-left: 4px solid {color} !important; margin: 10px 0;">
+        <div style="color:{color}; font-weight:800; font-size:1.1rem; text-transform: uppercase;">{res['severity']}</div>
+        <div style="color:#eee; font-size:0.85rem; margin-top:6px; font-weight: 500;">{res['action']}</div>
+        <div style="display:flex; justify-content:space-between; margin-top:12px; padding-top:10px; border-top:1px solid rgba(255,183,0,0.1);">
+            <span style="color:#88aacc; font-size:0.75rem;">{res['ml_label']}</span>
+            <span style="color:#FFB700; font-weight:700; font-size:0.85rem;">{res['confidence']}% CONF</span>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ── Spectral Signature chart ──────────────────────────────────────────────
     st.sidebar.markdown("**Spectral Signature**")
@@ -179,12 +179,12 @@ def _render_pml_sidebar():
     ))
 
     fig.update_layout(
-        paper_bgcolor="#0d0d0d",
-        plot_bgcolor="#111",
+        paper_bgcolor="#000814",
+        plot_bgcolor="#001D3D",
         font=dict(color="#aaa", size=10),
         legend=dict(
             font=dict(size=9),
-            bgcolor="#111",
+            bgcolor="#001D3D",
             bordercolor="#333",
             borderwidth=1,
             orientation="h",
@@ -317,7 +317,7 @@ def render_map():
     if st.session_state.selected_route:
         folium.PolyLine(
             locations=st.session_state.selected_route,
-            color="#00ffff",
+            color="#FFB700",
             weight=4,
             opacity=0.8,
             dash_array="10,10",
@@ -438,22 +438,21 @@ def render_map():
 
             for i, row in ranked.iterrows():
                 color = SEVERITY_COLOR.get(row["severity"], "#aaaaaa")
-                st.markdown(
-                    f"""
-<div style="border-left:5px solid {color};background:#0d0d0d;
-border-radius:8px;padding:14px 16px;margin-bottom:12px;">
-<div style="color:#888;font-size:0.75rem;letter-spacing:2px;">
-PRIORITY {["1ST","2ND","3RD"][i]}</div>
-<div style="color:#eee;font-weight:bold;margin-top:4px;">{row['name']}</div>
-<div style="color:#aaa;font-size:0.85rem;margin-top:6px;">
-<span style="color:{color};">{row['severity']}</span>
-&nbsp;|&nbsp; {row['distance_km']} km
-&nbsp;|&nbsp; {row['est_tonnes']:,} t
-&nbsp;|&nbsp; FDI {row['fdi_score']}
-</div></div>
-""",
-                    unsafe_allow_html=True,
-                )
+                st.markdown(f"""
+                <div class="glass-card" style="border-left: 4px solid {color} !important; margin-bottom: 15px;">
+                    <div style="color:#FFB700; font-size:0.7rem; font-weight:700; letter-spacing:1.5px; text-transform: uppercase;">
+                        TARGET {i+1} — {row['severity']}
+                    </div>
+                    <div style="color:#fff; font-weight:700; font-size:1.2rem; margin-top:6px; font-family:'Montserrat', sans-serif;">
+                        {row['name']}
+                    </div>
+                    <div style="display:flex; gap:12px; margin-top:12px; color:#88aacc; font-size:0.8rem; font-family:'Space Mono', monospace;">
+                        <span>📍 {row['distance_km']} km</span>
+                        <span>📦 {row['est_tonnes']:,} t</span>
+                        <span>📊 FDI {row['fdi_score']}</span>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
 
     # ── Sidebar PML panel ─────────────────────────────────────────────────────
     _render_pml_sidebar()

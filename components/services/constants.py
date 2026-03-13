@@ -2,10 +2,10 @@
 # Shared constants for map styling, severity levels, and tile layers.
 
 SEVERITY_COLOR = {
-    "Critical": "#ff2222",
-    "High":     "#ff8800",
-    "Medium":   "#ffcc00",
-    "Low":      "#44cc44",
+    "Critical": "#FF5400",
+    "High":     "#FF8500",
+    "Medium":   "#FFB700",
+    "Low":      "#FFD000",
 }
 
 SEVERITY_WEIGHT = {
