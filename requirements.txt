@@ -7,3 +7,9 @@ numpy
 plotly
 sentinelhub
 searoute
+geopandas
+shapely
+tifffile
+earthengine-api
+geemap
+google-auth

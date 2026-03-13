@@ -1,11 +1,11 @@
 import streamlit as st
-import sys
-import os
+# import sys
+# import os
 
-# Fix for broken venv relocation
-site_packages = "/home/naveen/Ocean-Plastic-Detector/venv/lib/python3.12/site-packages"
-if os.path.exists(site_packages) and site_packages not in sys.path:
-    sys.path.append(site_packages)
+# # Fix for broken venv relocation
+# site_packages = "/home/naveen/Ocean-Plastic-Detector/venv/lib/python3.12/site-packages"
+# if os.path.exists(site_packages) and site_packages not in sys.path:
+#     sys.path.append(site_packages)
 
 from components.map_view import render_map
 from components.metrics import render_metrics
@@ -20,7 +20,7 @@ SEVERITY_COLOR = {
     "Low":      "#44cc44",
 }
 
-st.set_page_config(page_title="Global Plastic Ledger", layout="wide")
+st.set_page_config(page_title="Global Plastic Ledger",page_icon="🌊", layout="wide")
 st.title("Global Plastic Ledger")
 st.caption("Real-Time Ocean Plastic Hotspot Tracker")
 st.markdown("---")
