@@ -1,10 +1,8 @@
-## Global Plastic Ledger 🌊
+## Ocean Plastic Ledger 🌊
 
-Real‑time ocean plastic hotspot tracker built with Streamlit, Folium, and a simple ML model. It lets you:
+An experimental prototype for tracking ocean plastic hotspots using map-based visualization, basic spectral analysis, and a simple ML model.
 
-- **Visualize verified plastic accumulation zones** on an interactive global map
-- **Rank nearby cleanup targets** for a vessel’s current position
-- **Experiment with satellite band inputs** (Red, NIR, SWIR) using a Floating Debris Index (FDI) and a toy Random Forest classifier
+This project explores how satellite data and crowd-informed datasets could be used to identify and prioritize marine plastic cleanup efforts. However, it is currently limited by the lack of reliable, publicly accessible satellite data specifically for ocean plastic detection.
 
 ---
 
@@ -29,7 +27,17 @@ Real‑time ocean plastic hotspot tracker built with Streamlit, Folium, and a si
 
 ---
 
-### 2. Project Structure
+### 2. Tech Stack
+
+- Frontend: Streamlit
+- Mapping: Folium, OpenStreetMap
+- Backend / Logic: Python
+- ML: scikit-learn (Random Forest)
+- Data Processing: NumPy, Pandas
+
+---
+
+### 3. Project Structure
 
 - `app.py` – Main Streamlit app (tabs, layout, wiring)
 - `fdi.py` – FDI formula, severity banding, and RandomForest model
@@ -39,7 +47,7 @@ Real‑time ocean plastic hotspot tracker built with Streamlit, Folium, and a si
 
 ---
 
-### 3. Installation
+### 4. Installation
 
 1. **Clone the repo**
 
@@ -64,7 +72,7 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-If you don’t have a `requirements.txt` yet, typical dependencies are:
+Dependencies :
 
 - `streamlit`
 - `pandas`
@@ -75,7 +83,7 @@ If you don’t have a `requirements.txt` yet, typical dependencies are:
 
 ---
 
-### 4. Running the App
+4. **Running the App**
 
 From the project root:
 
@@ -89,19 +97,27 @@ Then open the local URL Streamlit prints in your terminal (usually `http://local
 
 ### 5. How It Works (High‑Level)
 
-- **Hotspots dataset** in `data/hotspots.py` contains real‑world plastic accumulation zones sourced from NOAA, The Ocean Cleanup, Eriksen et al., and other literature (see in‑file comments).
-- **Map search** uses a Haversine distance calculation to filter zones within the selected radius of the vessel.
-- **Priority score** combines severity weighting, FDI score, density, and distance to rank cleanup targets.
-- **FDI + ML tab** lets you interactively see how spectral bands would influence FDI and a toy classifier’s decision.
+- A curated dataset (data/hotspots.py) contains known ocean plastic accumulation zones derived from research sources (NOAA, The Ocean Cleanup, etc.)
+- The app filters zones using distance calculations based on user input
+- A scoring system ranks cleanup priorities using severity, density, and proximity
+- The FDI analyzer simulates how spectral bands might indicate floating debris
+- A simple ML model provides experimental classification based on input values
 
 ---
 
 ### 6. Notes & Limitations
+This is an educational prototype and not a production-ready system.
 
-- This is an **educational / prototyping tool**, not an operational navigation or decision‑support system.
-- Coordinates and metrics are based on published ranges and simplified assumptions, not live satellite data.
-- The Random Forest model is trained on a tiny synthetic dataset—**do not** treat its predictions as scientific outputs.
+Key limitations:
 
+- ❗ No reliable real-time satellite dataset
+  There is currently no easily accessible, high-quality public dataset specifically for detecting ocean plastic using satellite imagery.
+- ❗ Simulated / approximated data
+  Hotspot locations and FDI values are based on research summaries and simplified assumptions, not live data pipelines.
+- ❗ Experimental ML model
+  The Random Forest classifier is trained on a small synthetic dataset and is not scientifically validated.
+- ❗ Not suitable for real-world decision making
+  This tool is intended for exploration and demonstration purposes only.
 ---
 
 ### 7. License & Attribution
